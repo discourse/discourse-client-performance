@@ -1,0 +1,2 @@
+plugins:
+  client_performance_enabled: false
