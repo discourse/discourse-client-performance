@@ -16,6 +16,7 @@ class ClientPerformance::ReportController < ApplicationController
 
     data = {}
 
+    data["@timestamp"] = Time.now.iso8601
     data["url.path"] = path = params["path"].to_s
 
     route = begin
