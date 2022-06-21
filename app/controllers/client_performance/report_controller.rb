@@ -48,6 +48,8 @@ class ClientPerformance::ReportController < ApplicationController
     NUMERIC_FIELDS.each do |f|
       if (raw = params[f]) && (raw.is_a?(String) || raw.is_a?(Integer))
         data["discourse"]["client_perf"][f] = (raw.to_f / 1000).round(3)
+      elsif params[f].nil? && f == "largest_contentful_paint"
+        # fine, not supported on all browsers
       else
         raise Discourse::InvalidParameters.new(f)
       end
