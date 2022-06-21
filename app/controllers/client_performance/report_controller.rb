@@ -17,6 +17,7 @@ class ClientPerformance::ReportController < ApplicationController
     data = {}
 
     data["@timestamp"] = Time.now.iso8601
+    data["type"] = "client-performance"
     data["url.path"] = path = params["path"].to_s
 
     route = begin
@@ -35,11 +36,11 @@ class ClientPerformance::ReportController < ApplicationController
     end
 
     data["user_agent.original"] = request.user_agent
-    data["source.ip"] = request.remote_ip
+    data["source.address"] = request.remote_ip
 
     NUMERIC_FIELDS.each do |f|
       if (raw = params[f]) && (raw.is_a?(String) || raw.is_a?(Integer))
-        data["discourse.client_perf.#{f}"] = raw.to_i
+        data["discourse.client_perf.#{f}"] = (raw.to_f / 1000).round(3)
       else
         raise Discourse::InvalidParameters.new(f)
       end
