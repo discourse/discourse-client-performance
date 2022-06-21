@@ -18,7 +18,9 @@ class ClientPerformance::ReportController < ApplicationController
 
     data["@timestamp"] = Time.now.iso8601
     data["type"] = "client-performance"
-    data["url.path"] = path = params["path"].to_s
+
+    path = params["path"].to_s
+    data["url"] = { "path" => path }
 
     route = begin
       Rails.application.routes.recognize_path(path)
@@ -26,21 +28,26 @@ class ClientPerformance::ReportController < ApplicationController
       nil
     end
 
+    data["discourse"] = {}
+
     if route
-      data["discourse.route"] = "#{route[:controller]}/#{route[:action]}"
+      data["discourse"]["route"] = "#{route[:controller]}/#{route[:action]}"
     end
 
     if current_user
-      data["discourse.user.name"] = current_user.username
-      data["discourse.user.staff"] = current_user.staff?
+      data["discourse"]["user"] = {
+        "name" => current_user.username,
+        "staff" => current_user.staff?
+      }
     end
 
-    data["user_agent.original"] = request.user_agent
-    data["source.address"] = request.remote_ip
+    data["user_agent"] = { "original" => request.user_agent }
+    data["source"] = { "address" => request.remote_ip }
 
+    data["discourse"]["client_perf"] = {}
     NUMERIC_FIELDS.each do |f|
       if (raw = params[f]) && (raw.is_a?(String) || raw.is_a?(Integer))
-        data["discourse.client_perf.#{f}"] = (raw.to_f / 1000).round(3)
+        data["discourse"]["client_perf"][f] = (raw.to_f / 1000).round(3)
       else
         raise Discourse::InvalidParameters.new(f)
       end
