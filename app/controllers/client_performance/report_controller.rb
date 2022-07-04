@@ -74,14 +74,19 @@ class ClientPerformance::ReportController < ApplicationController
       f.sync = true
       Logger.new f
     end
+
     @@log_queue ||= Queue.new
-    @@log_thread ||= Thread.new do
-      begin
-        loop { @@logger << @@log_queue.pop }
-      rescue Exception => e
-        Discourse.warn_exception(e, message: "Client performance logging logging thread terminated unexpectedly")
+
+    if !@@log_thread || !@@log_thread.alive?
+      @@log_thread = Thread.new do
+        loop do
+          @@logger << @@log_queue.pop
+        rescue Exception => e
+          Discourse.warn_exception(e, message: "Exception encountered while logging client performance")
+        end
       end
     end
+
     @@log_queue.push(message)
   end
 end
