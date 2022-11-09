@@ -5,6 +5,8 @@ var webVitals=function(e){"use strict";var t,n,i,r,a=function(e,t){return{name:e
 
 const SUPPORTS_LCP = !!window.LargestContentfulPaint;
 
+const REPORT_ANYWAY_AFTER_SECONDS = 5;
+
 class DiscoursePerformanceTool {
   observer = null;
 
@@ -15,6 +17,12 @@ class DiscoursePerformanceTool {
 
   constructor() {
     this.path = window.location.pathname;
+
+    window.addEventListener("beforeunload", () => {
+      if (performance.now() > REPORT_ANYWAY_AFTER_SECONDS * 1000) {
+        this.report();
+      }
+    });
   }
 
   listenForPerformanceEntries() {
@@ -68,42 +76,119 @@ class DiscoursePerformanceTool {
   }
 
   reportIfReady() {
+    if (
+      this.navigationEntry &&
+      this.firstContentfulPaintEntry &&
+      this.discourseBootEntry &&
+      (!SUPPORTS_LCP || this.largestContentfulPaint)
+    ) {
+      this.report();
+    }
+  }
+
+  report() {
     if (this.reported) {
       return;
     }
-
-    if (
-      !(
-        this.navigationEntry &&
-        this.firstContentfulPaintEntry &&
-        this.discourseBootEntry &&
-        (!SUPPORTS_LCP || this.largestContentfulPaint)
-      )
-    ) {
-      return;
-    }
-
     this.reported = true;
 
     const data = {};
 
-    data["time_to_first_byte"] = this.navigationEntry.responseStart;
-    data["discourse_booted"] = this.discourseBootEntry.startTime;
+    data["time_to_first_byte"] = this.navigationEntry?.responseStart;
+    data["discourse_booted"] = this.discourseBootEntry?.startTime;
     data["dom_content_loaded"] =
-      this.navigationEntry.domContentLoadedEventStart;
-    data["first_contentful_paint"] = this.firstContentfulPaintEntry.startTime;
+      this.navigationEntry?.domContentLoadedEventStart;
+    data["first_contentful_paint"] = this.firstContentfulPaintEntry?.startTime;
     if (SUPPORTS_LCP) {
-      data["largest_contentful_paint"] = this.largestContentfulPaint.value;
+      data["largest_contentful_paint"] = this.largestContentfulPaint?.value;
     }
 
     data["path"] = this.path;
 
-    const body = new FormData();
-    for (const [key, value] of Object.entries(data)) {
-      body.append(key, value);
+    const assetStats = this.getAssetStatsByDomain();
+
+    data["assets"] = {
+      local: assetStats.get(document.location.host),
+    };
+
+    const siteInfo = document.getElementById("data-discourse-setup").dataset;
+    if (siteInfo.cdn) {
+      data["assets"]["app_cdn"] = assetStats.get(new URL(siteInfo.cdn).host);
+    }
+    if (siteInfo.s3Cdn) {
+      data["assets"]["s3_cdn"] = assetStats.get(new URL(siteInfo.s3Cdn).host);
     }
 
-    navigator.sendBeacon("/client-performance/report", body);
+    const body = new FormData();
+    body.append("data", JSON.stringify(data));
+
+    navigator.sendBeacon("/client-performance/report.json", body);
+  }
+
+  getAssetStatsByDomain() {
+    const domResourceUrls = new Set();
+
+    document.querySelectorAll("SCRIPT, LINK[rel=stylesheet]").forEach((el) => {
+      if (el.async) {
+        return;
+      }
+      const src = el.src || el.href;
+      if (!src) {
+        return;
+      }
+      domResourceUrls.add(new URL(src, window.location).toString());
+    });
+
+    const resourcePerformanceInfos = new Map();
+
+    performance.getEntriesByType("resource").forEach((r) => {
+      if (!domResourceUrls.has(r.name)) {
+        return;
+      }
+
+      if (r.responseEnd) {
+        resourcePerformanceInfos.set(r.name, {
+          duration: r.responseEnd - r.startTime,
+          finishedAt: r.responseEnd,
+          status: "success",
+        });
+      } else {
+        resourcePerformanceInfos.set(r.name, { status: "fail" });
+      }
+    });
+
+    for (const url of domResourceUrls) {
+      if (!resourcePerformanceInfos.has(url)) {
+        resourcePerformanceInfos.set(url, { status: "pending" });
+      }
+    }
+
+    const domainData = new Map();
+
+    for (const [url, resourceInfo] of resourcePerformanceInfos) {
+      const domain = new URL(url).host;
+
+      let thisDomainData = domainData.get(domain);
+      if (!thisDomainData) {
+        thisDomainData = {
+          success_count: 0,
+          fail_count: 0,
+          pending_count: 0,
+          max_duration: 0,
+        };
+        domainData.set(domain, thisDomainData);
+      }
+
+      thisDomainData[`${resourceInfo.status}_count`] += 1;
+      if (resourceInfo.duration) {
+        thisDomainData.max_duration = Math.max(
+          thisDomainData.max_duration,
+          Math.round(resourceInfo.duration) / 1000
+        );
+      }
+    }
+
+    return domainData;
   }
 
   round(value, precision = 1) {
