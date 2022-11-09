@@ -9,18 +9,25 @@
 
 enabled_site_setting :client_performance_enabled
 
-register_html_builder('server:before-head-close') do |controller|
-  src = "#{Discourse.base_path}/plugins/discourse-client-performance/javascripts/discourse-client-performance.js"
-  "<script async src=#{src}></script>"
-end
-
 module ::ClientPerformance
   PLUGIN_NAME = "client-performance"
+  SCRIPT_PATH = "#{Discourse.base_path}/plugins/discourse-client-performance/javascripts/discourse-client-performance.js"
+end
+
+register_html_builder('server:before-head-close') do |controller|
+  "<script async src=#{ClientPerformance::SCRIPT_PATH}></script>"
 end
 
 require_relative 'lib/engine'
 
 after_initialize do
+  if Rails.configuration.multisite
+    raise "discourse-client-performance does not support multisite environments. Uninstall the plugin."
+  end
+
+  extend_content_security_policy(
+    script_src: ["#{Discourse.base_url_no_prefix}#{::ClientPerformance::SCRIPT_PATH}"]
+  )
 
   Discourse::Application.routes.append do
     mount ::ClientPerformance::Engine, at: "/client-performance"
