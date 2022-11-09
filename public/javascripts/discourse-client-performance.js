@@ -96,12 +96,6 @@ class DiscoursePerformanceTool {
       data["largest_contentful_paint"] = this.largestContentfulPaint.value;
     }
 
-    const tableRows = [];
-    for (const [key, value] of Object.entries(data)) {
-      data[key] = Math.round(value);
-      tableRows.push([key, `${data[key]} ms`]);
-    }
-
     data["path"] = this.path;
 
     const body = new FormData();
@@ -115,36 +109,6 @@ class DiscoursePerformanceTool {
   round(value, precision = 1) {
     const multiplier = Math.pow(10, precision || 0);
     return Math.round(value * multiplier) / multiplier;
-  }
-
-  table(data) {
-    let columnWidths = [];
-    for (const row of data) {
-      for (const [colIndex, value] of row.entries()) {
-        if (!columnWidths[colIndex] || value.length > columnWidths[colIndex]) {
-          columnWidths[colIndex] = value.length;
-        }
-      }
-      columnWidths;
-    }
-
-    let output = "";
-    for (const [rowIndex, row] of data.entries()) {
-      output += "|";
-      for (const [colIndex, value] of row.entries()) {
-        output += ` ${value.padStart(columnWidths[colIndex])} |`;
-      }
-      output += "\n";
-      if (rowIndex === 0) {
-        output += "|";
-        for (let colIndex = 0; colIndex < row.length; colIndex++) {
-          output += ":|".padStart(columnWidths[colIndex] + 3, "-");
-        }
-        output += "\n";
-      }
-    }
-
-    return output;
   }
 }
 
