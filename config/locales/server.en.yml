@@ -1,0 +1,3 @@
+en:
+  site_settings:
+   client_performance_enabled: "Allow gathering of client site stats (1 extra request per full page load)"

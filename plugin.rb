@@ -9,14 +9,21 @@
 
 enabled_site_setting :client_performance_enabled
 
-register_html_builder('server:before-head-close') do |controller|
-  src = "#{Discourse.base_path}/plugins/discourse-client-performance/javascripts/discourse-client-performance.js"
-  "<script async src=#{src}></script>"
-end
-
 module ::ClientPerformance
   PLUGIN_NAME = "client-performance"
+  SCRIPT_PATH = "#{Discourse.base_path}/plugins/discourse-client-performance/javascripts/discourse-client-performance.js"
 end
+
+register_html_builder('server:before-head-close') do |controller|
+  "<script async src=#{::ClientPerformance::SCRIPT_PATH}></script>"
+end
+
+# TODO: this is not going to work until core learns how to handle
+# paths. This is too early for site settings to be accessed, so we don't know what domain we
+# are on.
+# extend_content_security_policy(
+#  script_src: [::ClientPerformance::SCRIPT_PATH]
+# )
 
 require_relative 'lib/engine'
 

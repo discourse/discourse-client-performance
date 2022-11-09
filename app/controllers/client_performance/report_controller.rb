@@ -9,6 +9,7 @@ class ClientPerformance::ReportController < ApplicationController
     "dom_content_loaded",
     "first_contentful_paint",
     "largest_contentful_paint",
+    "failed_cdn_requests"
   ]
 
   def report
