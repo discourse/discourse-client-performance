@@ -11,8 +11,55 @@ class ClientPerformance::ReportController < ApplicationController
     "largest_contentful_paint",
   ]
 
+  ASSET_FIELDS = [
+    "local",
+    "app_cdn",
+    "s3_cdn"
+  ]
+
+  JSON_SCHEMA = {
+      "type" => "object",
+      "required" => ["path", "time_to_first_byte", "assets"],
+      "properties" => {
+        "path" => { "type" => "string" },
+        **NUMERIC_FIELDS.map { |f| [f, { "type" => "number" }] }.to_h,
+        "assets" => {
+          "type" => "object",
+          "properties" => {
+            **ASSET_FIELDS.map do |k|
+              [
+                k,
+                {
+                  "type" => "object",
+                  "properties" => {
+                    "success_count" => { "type" => "integer" },
+                    "fail_count" => { "type" => "integer" },
+                    "pending_count" => { "type" => "integer" },
+                    "max_duration" => { "type" => "number" }
+                  },
+                  "additionalProperties" => false
+                }
+              ]
+            end.to_h
+          },
+          "additionalProperties" => false
+        }
+      },
+      "additionalProperties" => false
+  }
+
   def report
     RateLimiter.new(nil, "client_performance_report_#{current_user&.id || request.client_ip}", 1, 1.minute).performed!
+
+    begin
+      reported_data = JSON.parse(params.require("data"))
+    rescue JSON::ParserError
+      raise Discourse::InvalidParameters.new("Cannot parse JSON")
+    end
+
+    if !JSONSchemer.schema(JSON_SCHEMA).valid?(reported_data)
+      raise Discourse::InvalidParameters.new("Unexpected JSON structure")
+    end
 
     data = {}
 
@@ -46,14 +93,12 @@ class ClientPerformance::ReportController < ApplicationController
 
     data["discourse"]["client_perf"] = {}
     NUMERIC_FIELDS.each do |f|
-      if (raw = params[f]) && (raw.is_a?(String) || raw.is_a?(Integer))
+      if raw = reported_data[f]
         data["discourse"]["client_perf"][f] = (raw.to_f / 1000).round(3)
-      elsif params[f].nil? && f == "largest_contentful_paint"
-        # fine, not supported on all browsers
-      else
-        raise Discourse::InvalidParameters.new(f)
       end
     end
+
+    data["discourse"]["asset_perf"] = reported_data["assets"]
 
     log(data)
 
