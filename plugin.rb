@@ -12,10 +12,13 @@ enabled_site_setting :client_performance_enabled
 module ::ClientPerformance
   PLUGIN_NAME = "client-performance"
   SCRIPT_PATH = "#{Discourse.base_path}/plugins/discourse-client-performance/javascripts/discourse-client-performance.js"
+  SCRIPT_HASH = Digest::SHA256.hexdigest(File.read("#{Rails.root}/plugins/discourse-client-performance/public/javascripts/discourse-client-performance.js"))
 end
 
 register_html_builder('server:before-head-close') do |controller|
-  "<script async src=#{ClientPerformance::SCRIPT_PATH}></script>"
+  path = ClientPerformance::SCRIPT_PATH
+  path += "?v=#{ClientPerformance::SCRIPT_HASH}" if Rails.env.production?
+  "<script async src=\"#{path}\"></script>"
 end
 
 require_relative 'lib/engine'
