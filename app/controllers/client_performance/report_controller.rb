@@ -48,8 +48,10 @@ class ClientPerformance::ReportController < ApplicationController
       "additionalProperties" => false
   }
 
+  LOGS_PER_10_SECONDS = 2
+
   def report
-    RateLimiter.new(nil, "client_performance_report_#{current_user&.id || request.client_ip}", 1, 1.minute).performed!
+    RateLimiter.new(nil, "client_performance_report_#{current_user&.id || request.client_ip}", LOGS_PER_10_SECONDS, 10).performed!
 
     begin
       reported_data = JSON.parse(params.require("data"))
