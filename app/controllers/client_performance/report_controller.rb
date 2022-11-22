@@ -35,7 +35,8 @@ class ClientPerformance::ReportController < ApplicationController
                     "success_count" => { "type" => "integer" },
                     "fail_count" => { "type" => "integer" },
                     "pending_count" => { "type" => "integer" },
-                    "max_duration" => { "type" => "number" }
+                    "max_duration" => { "type" => "number" },
+                    "domain" => { "type" => "string" }
                   },
                   "additionalProperties" => false
                 }
@@ -68,8 +69,8 @@ class ClientPerformance::ReportController < ApplicationController
     data["@timestamp"] = Time.now.iso8601
     data["type"] = "client-performance"
 
-    path = params["path"].to_s
-    data["url"] = { "path" => path }
+    path = data["path"]
+    data["url"] = { "domain" => Discourse.current_hostname, "path" => path }
 
     route = begin
       Rails.application.routes.recognize_path(path)
