@@ -94,10 +94,18 @@ class ClientPerformance::ReportController < ApplicationController
     data["user_agent"] = { "original" => request.user_agent }
     data["source"] = { "address" => request.remote_ip }
 
-    data["discourse"]["client_perf"] = {}
+    data["discourse"]["client_perf"] = {
+      "after_ttfb" => {}
+    }
+
+    ttfb = reported_data["time_to_first_byte"]
+
     NUMERIC_FIELDS.each do |f|
       if raw = reported_data[f]
         data["discourse"]["client_perf"][f] = (raw.to_f / 1000).round(3)
+        if f != "time_to_first_byte"
+          data["discourse"]["client_perf"]["after_ttfb"][f] = ((raw - ttfb).to_f / 1000).round(3)
+        end
       end
     end
 
