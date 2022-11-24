@@ -11,7 +11,7 @@ enabled_site_setting :client_performance_enabled
 
 module ::ClientPerformance
   PLUGIN_NAME = "client-performance"
-  SCRIPT_PATH = "#{Discourse.base_path}/plugins/discourse-client-performance/javascripts/discourse-client-performance.js"
+  SCRIPT_PATH = "/plugins/discourse-client-performance/javascripts/discourse-client-performance.js"
   SCRIPT_HASH = Digest::SHA256.hexdigest(File.read("#{Rails.root}/plugins/discourse-client-performance/public/javascripts/discourse-client-performance.js"))
 end
 
@@ -24,12 +24,8 @@ end
 require_relative 'lib/engine'
 
 after_initialize do
-  if Rails.configuration.multisite
-    raise "discourse-client-performance does not support multisite environments. Uninstall the plugin."
-  end
-
   extend_content_security_policy(
-    script_src: ["#{Discourse.base_url_no_prefix}#{::ClientPerformance::SCRIPT_PATH}"]
+    script_src: [::ClientPerformance::SCRIPT_PATH]
   )
 
   Discourse::Application.routes.append do
