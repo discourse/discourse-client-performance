@@ -12,28 +12,28 @@ enabled_site_setting :client_performance_enabled
 module ::ClientPerformance
   PLUGIN_NAME = "client-performance"
   SCRIPT_PATH = "/plugins/discourse-client-performance/javascripts/discourse-client-performance.js"
-  SCRIPT_HASH = Digest::SHA256.hexdigest(File.read("#{Rails.root}/plugins/discourse-client-performance/public/javascripts/discourse-client-performance.js"))
+  SCRIPT_HASH =
+    Digest::SHA256.hexdigest(
+      File.read(
+        "#{Rails.root}/plugins/discourse-client-performance/public/javascripts/discourse-client-performance.js",
+      ),
+    )
 end
 
-register_html_builder('server:before-head-close') do |controller|
+register_html_builder("server:before-head-close") do |controller|
   path = ClientPerformance::SCRIPT_PATH
   path += "?v=#{ClientPerformance::SCRIPT_HASH}" if Rails.env.production?
   "<script async src=\"#{path}\"></script>"
 end
 
-require_relative 'lib/engine'
+require_relative "lib/engine"
 
 after_initialize do
-  extend_content_security_policy(
-    script_src: [::ClientPerformance::SCRIPT_PATH]
-  )
+  extend_content_security_policy(script_src: [::ClientPerformance::SCRIPT_PATH])
 
   Discourse::Application.routes.append do
     mount ::ClientPerformance::Engine, at: "/client-performance"
   end
 
-  ClientPerformance::Engine.routes.append do
-    post "report" => "report#report"
-  end
-
+  ClientPerformance::Engine.routes.append { post "report" => "report#report" }
 end
