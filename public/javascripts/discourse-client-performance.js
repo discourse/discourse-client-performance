@@ -175,7 +175,7 @@ class DiscoursePerformanceTool {
           fail_count: 0,
           pending_count: 0,
           max_duration: 0,
-          domain
+          domain,
         };
         domainData.set(domain, thisDomainData);
       }
