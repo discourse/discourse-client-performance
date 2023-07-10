@@ -9,6 +9,7 @@ class ClientPerformance::ReportController < ApplicationController
     dom_content_loaded
     first_contentful_paint
     largest_contentful_paint
+    interaction_next_paint
   ]
 
   ASSET_FIELDS = %w[local app_cdn s3_cdn]
@@ -115,7 +116,7 @@ class ClientPerformance::ReportController < ApplicationController
     NUMERIC_FIELDS.each do |f|
       if raw = reported_data[f]
         data["discourse"]["client_perf"][f] = (raw.to_f / 1000).round(3)
-        if f != "time_to_first_byte"
+        if !%w[time_to_first_byte interaction_next_paint].include?(f)
           data["discourse"]["client_perf"]["after_ttfb"][f] = ((raw - ttfb).to_f / 1000).round(3)
         end
       end
