@@ -23,7 +23,7 @@ end
 register_html_builder("server:before-head-close") do |controller|
   path = ClientPerformance::SCRIPT_PATH
   path += "?v=#{ClientPerformance::SCRIPT_HASH}" if Rails.env.production?
-  "<script async src=\"#{path}\"></script>"
+  "<script async src=\"#{Discourse.base_path}/#{path}\"></script>"
 end
 
 require_relative "lib/engine"
