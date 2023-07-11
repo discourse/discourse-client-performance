@@ -22,6 +22,9 @@ class ClientPerformance::ReportController < ApplicationController
         "type" => "string",
       },
       **NUMERIC_FIELDS.map { |f| [f, { "type" => "number" }] }.to_h,
+      "interaction_next_paint_target" => {
+        "type" => "string",
+      },
       "assets" => {
         "type" => "object",
         "properties" => {
@@ -121,6 +124,10 @@ class ClientPerformance::ReportController < ApplicationController
         end
       end
     end
+
+    data["discourse"]["client_perf"]["interaction_next_paint_target"] = reported_data[
+      "interaction_next_paint_target"
+    ]
 
     data["discourse"]["asset_perf"] = reported_data["assets"]
 

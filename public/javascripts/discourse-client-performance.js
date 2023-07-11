@@ -109,6 +109,8 @@ class DiscourseClientPerformance {
     }
     if (SUPPORTS_INP) {
       data["interaction_next_paint"] = this.interactionNextPaint?.value;
+      data["interaction_next_paint_target"] =
+        this.interactionNextPaint?.attribution.eventTarget;
     }
 
 
