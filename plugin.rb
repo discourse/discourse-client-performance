@@ -5,7 +5,6 @@
 # version: 1.0
 # author: Discourse
 # url: https://github.com/discourse/discourse-client-performance
-# transpile_js: true
 
 enabled_site_setting :client_performance_enabled
 
