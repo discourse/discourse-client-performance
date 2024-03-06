@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ClientPerformance::ReportController < ApplicationController
+  requires_plugin ClientPerformance::PLUGIN_NAME
+
   skip_before_action :verify_authenticity_token, :check_xhr, :preload_json
 
   NUMERIC_FIELDS = %w[
