@@ -9,12 +9,12 @@
 enabled_site_setting :client_performance_enabled
 
 module ::ClientPerformance
-  PLUGIN_NAME = "client-performance"
-  SCRIPT_PATH = "/plugins/discourse-client-performance/javascripts/discourse-client-performance.js"
+  PLUGIN_NAME = "discourse-client-performance"
+  SCRIPT_PATH = "/plugins/#{PLUGIN_NAME}/javascripts/discourse-client-performance.js"
   SCRIPT_HASH =
     Digest::SHA256.hexdigest(
       File.read(
-        "#{Rails.root}/plugins/discourse-client-performance/public/javascripts/discourse-client-performance.js",
+        "#{Rails.root}/plugins/#{PLUGIN_NAME}/public/javascripts/discourse-client-performance.js",
       ),
     )
 end
