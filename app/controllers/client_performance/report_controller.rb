@@ -7,7 +7,8 @@ class ClientPerformance::ReportController < ApplicationController
 
   NUMERIC_FIELDS = %w[
     time_to_first_byte
-    discourse_booted
+    discourse_init
+    discourse_paint
     dom_content_loaded
     first_contentful_paint
     largest_contentful_paint
