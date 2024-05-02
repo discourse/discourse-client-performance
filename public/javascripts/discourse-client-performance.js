@@ -64,8 +64,10 @@ class DiscourseClientPerformance {
       this.navigationEntry = e;
     } else if (e.entryType === "paint" && e.name === "first-contentful-paint") {
       this.firstContentfulPaintEntry = e;
-    } else if (e.entryType === "mark" && e.name === "discourse-booted") {
-      this.discourseBootEntry = e;
+    } else if (e.entryType === "mark" && e.name === "discourse-init") {
+      this.discourseInitEntry = e;
+    } else if (e.entryType === "mark" && e.name === "discourse-paint") {
+      this.discoursePaintEntry = e;
     }
     this.reportIfReady();
   }
@@ -83,7 +85,8 @@ class DiscourseClientPerformance {
     if (
       this.navigationEntry &&
       this.firstContentfulPaintEntry &&
-      this.discourseBootEntry &&
+      this.discourseInitEntry &&
+      this.discoursePaintEntry &&
       (!SUPPORTS_LCP || this.largestContentfulPaint) &&
       (!SUPPORTS_INP || this.interactionNextPaint)
     ) {
@@ -100,7 +103,8 @@ class DiscourseClientPerformance {
     const data = {};
 
     data["time_to_first_byte"] = this.navigationEntry?.responseStart;
-    data["discourse_booted"] = this.discourseBootEntry?.startTime;
+    data["discourse_init"] = this.discourseInitEntry?.startTime;
+    data["discourse_paint"] = this.discoursePaintEntry?.startTime;
     data["dom_content_loaded"] =
       this.navigationEntry?.domContentLoadedEventStart;
     data["first_contentful_paint"] = this.firstContentfulPaintEntry?.startTime;
