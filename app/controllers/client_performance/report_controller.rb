@@ -91,7 +91,7 @@ class ClientPerformance::ReportController < ApplicationController
     data["@timestamp"] = Time.now.iso8601
     data["type"] = "client-performance"
 
-    path = data["path"]
+    path = reported_data["path"]
     data["url"] = { "domain" => Discourse.current_hostname, "path" => path }
 
     route =
