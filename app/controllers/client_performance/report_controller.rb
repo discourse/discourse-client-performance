@@ -28,6 +28,15 @@ class ClientPerformance::ReportController < ApplicationController
       "interaction_next_paint_target" => {
         "type" => "string",
       },
+      "viewport_width" => {
+        "type" => "integer",
+      },
+      "viewport_height" => {
+        "type" => "integer",
+      },
+      "mobile_view" => {
+        "type" => "boolean",
+      },
       "assets" => {
         "type" => "object",
         "properties" => {
@@ -133,6 +142,12 @@ class ClientPerformance::ReportController < ApplicationController
     ]
 
     data["discourse"]["asset_perf"] = reported_data["assets"]
+
+    data["discourse"]["client_info"] = {
+      "viewport_height" => reported_data["viewport_height"],
+      "viewport_width" => reported_data["viewport_width"],
+      "mobile_view" => reported_data["mobile_view"],
+    }
 
     log(data)
 
