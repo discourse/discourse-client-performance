@@ -139,6 +139,10 @@ class DiscourseClientPerformance {
       data["assets"]["s3_cdn"] = assetStats.get(new URL(siteInfo.s3Cdn).host);
     }
 
+    data["viewport_width"] = window.innerWidth;
+    data["viewport_height"] = window.innerHeight;
+    data["mobile_view"] = document.documentElement.classList.contains("mobile-view");
+
     const body = new FormData();
     body.append("data", JSON.stringify(data));
 
