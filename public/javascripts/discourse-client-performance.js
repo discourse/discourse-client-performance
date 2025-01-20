@@ -7,8 +7,6 @@ var webVitals=function(t){"use strict";var e,n,r=function(){var t=self.performan
 const SUPPORTS_LCP = !!window.LargestContentfulPaint;
 const SUPPORTS_INP = SUPPORTS_LCP;
 
-const REPORT_ANYWAY_AFTER_SECONDS = 5;
-
 class DiscourseClientPerformance {
   static start() {
     this.instance = new DiscourseClientPerformance();
@@ -20,11 +18,8 @@ class DiscourseClientPerformance {
   constructor() {
     this.path = window.location.pathname;
 
-    window.addEventListener("beforeunload", () => {
-      if (performance.now() > REPORT_ANYWAY_AFTER_SECONDS * 1000) {
-        this.report();
-      }
-    });
+    window.addEventListener("visibilitychange", () => this.report() );
+    window.addEventListener("beforeunload", () => this.report());
   }
 
   listenForPerformanceEntries() {
