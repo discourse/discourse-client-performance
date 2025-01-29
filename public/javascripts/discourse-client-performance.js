@@ -6,6 +6,15 @@ var webVitals=function(t){"use strict";var e,n,r=function(){var t=self.performan
 
 const SUPPORTS_LCP = !!window.LargestContentfulPaint;
 const SUPPORTS_INP = SUPPORTS_LCP;
+const SUPPORTS_CLS = SUPPORTS_LCP;
+
+function stringifyElement(e) {
+  const id = e.id ? `#${e.id}` : "";
+  const classes = Array.from(e.classList)
+    .map((c) => `.${c}`)
+    .join("");
+  return `${e.tagName.toLowerCase()}${id}${classes}`;
+}
 
 class DiscourseClientPerformance {
   static start() {
@@ -18,7 +27,7 @@ class DiscourseClientPerformance {
   constructor() {
     this.path = window.location.pathname;
 
-    window.addEventListener("visibilitychange", () => this.report() );
+    window.addEventListener("visibilitychange", () => this.report());
     window.addEventListener("beforeunload", () => this.report());
   }
 
@@ -51,6 +60,7 @@ class DiscourseClientPerformance {
 
     webVitals.onLCP(this.handleWebVital.bind(this));
     webVitals.onINP(this.handleWebVital.bind(this), { reportAllChanges: true });
+    webVitals.onCLS(this.handleWebVital.bind(this), { reportAllChanges: true });
 
     this.reportIfReady();
   }
@@ -73,12 +83,14 @@ class DiscourseClientPerformance {
       this.largestContentfulPaint = e;
     } else if (e.name === "INP") {
       this.interactionNextPaint = e;
+    } else if (e.name === "CLS") {
+      this.cumulativeLayoutShift = e;
     }
     this.reportIfReady();
   }
 
   reportIfReady() {
-    if(SUPPORTS_INP){
+    if (SUPPORTS_INP) {
       // INP metric continues changing after the page is loaded
       // so we wait until the unload event to report everything to the server
       return;
@@ -112,11 +124,23 @@ class DiscourseClientPerformance {
       data["largest_contentful_paint"] = this.largestContentfulPaint?.value;
     }
     if (SUPPORTS_INP) {
+      const inp = this.interactionNextPaint;
       data["interaction_next_paint"] = this.interactionNextPaint?.value;
-      data["interaction_next_paint_target"] =
-        this.interactionNextPaint?.attribution.interactionTarget;
-    }
 
+      const node = inp?.attribution.interactionTargetElement;
+      data["interaction_next_paint_target"] = node
+        ? stringifyElement(node)
+        : this.interactionNextPaint?.attribution.interactionTarget;
+    }
+    if (SUPPORTS_CLS) {
+      const cls = this.cumulativeLayoutShift;
+      data["cumulative_layout_shift"] = cls?.value;
+
+      const node = cls?.attribution.largestShiftSource.node;
+      data["cumulative_layout_shift_target"] = node
+        ? stringifyElement(node)
+        : cls?.attribution.largestShiftTarget;
+    }
 
     data["path"] = this.path;
 
@@ -136,7 +160,8 @@ class DiscourseClientPerformance {
 
     data["viewport_width"] = window.innerWidth;
     data["viewport_height"] = window.innerHeight;
-    data["mobile_view"] = document.documentElement.classList.contains("mobile-view");
+    data["mobile_view"] =
+      document.documentElement.classList.contains("mobile-view");
 
     const body = new FormData();
     body.append("data", JSON.stringify(data));
