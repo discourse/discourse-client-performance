@@ -13,6 +13,7 @@ class ClientPerformance::ReportController < ApplicationController
     first_contentful_paint
     largest_contentful_paint
     interaction_next_paint
+    cumulative_layout_shift
   ]
 
   ASSET_FIELDS = %w[local app_cdn s3_cdn]
@@ -26,6 +27,9 @@ class ClientPerformance::ReportController < ApplicationController
       },
       **NUMERIC_FIELDS.map { |f| [f, { "type" => "number" }] }.to_h,
       "interaction_next_paint_target" => {
+        "type" => "string",
+      },
+      "cumulative_layout_shift_target" => {
         "type" => "string",
       },
       "viewport_width" => {
@@ -131,7 +135,7 @@ class ClientPerformance::ReportController < ApplicationController
     NUMERIC_FIELDS.each do |f|
       if raw = reported_data[f]
         data["discourse"]["client_perf"][f] = (raw.to_f / 1000).round(3)
-        if !%w[time_to_first_byte interaction_next_paint].include?(f)
+        if !%w[time_to_first_byte interaction_next_paint cumulative_layout_shift].include?(f)
           data["discourse"]["client_perf"]["after_ttfb"][f] = ((raw - ttfb).to_f / 1000).round(3)
         end
       end
@@ -139,6 +143,10 @@ class ClientPerformance::ReportController < ApplicationController
 
     data["discourse"]["client_perf"]["interaction_next_paint_target"] = reported_data[
       "interaction_next_paint_target"
+    ]
+
+    data["discourse"]["client_perf"]["cumulative_layout_shift_target"] = reported_data[
+      "cumulative_layout_shift_target"
     ]
 
     data["discourse"]["asset_perf"] = reported_data["assets"]
