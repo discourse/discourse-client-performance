@@ -134,7 +134,9 @@ class ClientPerformance::ReportController < ApplicationController
 
     NUMERIC_FIELDS.each do |f|
       if raw = reported_data[f]
-        data["discourse"]["client_perf"][f] = (raw.to_f / 1000).round(3)
+        value = raw.to_f
+        value = value / 1000 unless f == "cumulative_layout_shift"
+        data["discourse"]["client_perf"][f] = value.round(3)
         if !%w[time_to_first_byte interaction_next_paint cumulative_layout_shift].include?(f)
           data["discourse"]["client_perf"]["after_ttfb"][f] = ((raw - ttfb).to_f / 1000).round(3)
         end
