@@ -8,12 +8,21 @@ const SUPPORTS_LCP = !!window.LargestContentfulPaint;
 const SUPPORTS_INP = SUPPORTS_LCP;
 const SUPPORTS_CLS = SUPPORTS_LCP;
 
-function stringifyElement(e) {
-  const id = e.id ? `#${e.id}` : "";
-  const classes = Array.from(e.classList)
-    .map((c) => `.${c}`)
-    .join("");
-  return `${e.tagName.toLowerCase()}${id}${classes}`;
+/**
+ * The default stringification of web-vital targets will describe its path from the closest element with an id.
+ * This normally works great, but classic Ember components introduce random ids like `#ember12` which are not very useful.
+ * So if we detect that case, we do our own stringification.
+ */
+function stringifyTarget(node, defaultString) {
+  if (node && defaultString?.match(/^#ember\d+$/)) {
+    const id = node.id ? `#${node.id}` : "";
+    const classes = Array.from(node.classList)
+      .map((c) => `.${c}`)
+      .join("");
+    return `${node.tagName.toLowerCase()}${id}${classes}`;
+  } else {
+    return defaultString;
+  }
 }
 
 class DiscourseClientPerformance {
@@ -125,21 +134,23 @@ class DiscourseClientPerformance {
     }
     if (SUPPORTS_INP) {
       const inp = this.interactionNextPaint;
-      data["interaction_next_paint"] = this.interactionNextPaint?.value;
+      data["interaction_next_paint"] = inp?.value;
 
-      const node = inp?.attribution.interactionTargetElement;
-      data["interaction_next_paint_target"] = node
-        ? stringifyElement(node)
-        : this.interactionNextPaint?.attribution.interactionTarget;
+      const attribution = inp?.attribution;
+      data["interaction_next_paint_target"] = stringifyTarget(
+        attribution?.interactionTargetElement,
+        attribution?.interactionTarget
+      );
     }
     if (SUPPORTS_CLS) {
       const cls = this.cumulativeLayoutShift;
       data["cumulative_layout_shift"] = cls?.value;
 
-      const node = cls?.attribution.largestShiftSource.node;
-      data["cumulative_layout_shift_target"] = node
-        ? stringifyElement(node)
-        : cls?.attribution.largestShiftTarget;
+      const attribution = cls?.attribution;
+      data["cumulative_layout_shift_target"] = stringifyTarget(
+        attribution?.largestShiftSource?.node,
+        attribution?.largestShiftTarget
+      );
     }
 
     data["path"] = this.path;
