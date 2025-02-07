@@ -4,6 +4,7 @@ class ClientPerformance::ReportController < ApplicationController
   requires_plugin ClientPerformance::PLUGIN_NAME
 
   skip_before_action :verify_authenticity_token, :check_xhr, :preload_json
+  before_action :skip_persist_session
 
   NUMERIC_FIELDS = %w[
     time_to_first_byte
@@ -197,5 +198,14 @@ class ClientPerformance::ReportController < ApplicationController
     end
 
     @@log_queue.push(message)
+  end
+
+  private
+
+  def skip_persist_session
+    # This endpoint is called asynchronously at the same time as other requests,
+    # and never needs to modify the session. Skipping ensures that an unneeded cookie rotation
+    # doesn't race against another request and cause issues.
+    session.options[:skip] = true
   end
 end
