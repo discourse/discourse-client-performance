@@ -3,7 +3,10 @@
 class ClientPerformance::ReportController < ApplicationController
   requires_plugin ClientPerformance::PLUGIN_NAME
 
-  skip_before_action :verify_authenticity_token, :check_xhr, :preload_json
+  skip_before_action :verify_authenticity_token,
+                     :check_xhr,
+                     :preload_json,
+                     :redirect_to_login_if_required
   before_action :skip_persist_session
 
   NUMERIC_FIELDS = %w[
