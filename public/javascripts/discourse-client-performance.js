@@ -161,11 +161,11 @@ class DiscourseClientPerformance {
       local: assetStats.get(document.location.host),
     };
 
-    const siteInfo = document.getElementById("data-discourse-setup").dataset;
-    if (siteInfo.cdn) {
+    const siteInfo = document.getElementById("data-discourse-setup")?.dataset;
+    if (siteInfo?.cdn) {
       data["assets"]["app_cdn"] = assetStats.get(new URL(siteInfo.cdn).host);
     }
-    if (siteInfo.s3Cdn) {
+    if (siteInfo?.s3Cdn) {
       data["assets"]["s3_cdn"] = assetStats.get(new URL(siteInfo.s3Cdn).host);
     }
 
